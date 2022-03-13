@@ -36,26 +36,6 @@ class Puzzle:
                 = self.state[ emptySquare[0] ][emptySquare[1]], self.state[ newEmptySqaure[0] ][ newEmptySqaure[1] ]
             return 1
         return 0
-
-    # DELETE THIS !
-    def getNextMoves(self):
-        next_moves = []
-        for direction in DIRECTIONS :
-            direction = DIRECTIONS[direction_str]
-            # get empty square coordinates
-            emptySquare = self.findEmptySquare()
-            # get empty square new coordinates
-            newEmptySqaure = [ emptySquare[0]+direction[0],
-                            emptySquare[1]+direction[1] ]
-            # check is legal move
-            if 0 <= newEmptySqaure[0] < len(self.state)\
-                and 0 <= newEmptySqaure[1] < len(self.state[0]) :
-                newState = deepcopy(self.state)
-                # swap empty square oldPos with newPos
-                newState[ newEmptySqaure[0] ][ newEmptySqaure[1] ], newState[ emptySquare[0] ][emptySquare[1]]\
-                    = newState[ emptySquare[0] ][emptySquare[1]], newState[ newEmptySqaure[0] ][ newEmptySqaure[1] ]
-                next_moves.append(newState)
-        return next_moves
     
     def show(self):
         for row in self.state:

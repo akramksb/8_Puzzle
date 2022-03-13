@@ -11,11 +11,21 @@ class Node:
         self.id = 0
         for row in self.state:
             for col in row:
-                self.id = self.id*10 + col
+                self.id = self.id*100 + col
         # print( self.id )
     
     def f(self):
         return self.g + self.h
+
+
+def findElement(element, state):
+    for i in range( len(state) ):
+        for j in range( len( state[0] ) ):
+            if state[i][j] == element:
+                return (i, j)
+
+def findEmptySquare(state):
+    return findElement(0, state)
 
 
 def h( state, goal_state = GOAL_STATE ):
@@ -26,12 +36,13 @@ def h( state, goal_state = GOAL_STATE ):
                     score += 1
     return score
 
-def findEmptySquare(state):
-        for row_index in range( len(state)):
+def h( state, goal_state = GOAL_STATE ):
+    score = 0
+    for row_index in range( len(state) ):
             for col_index in range( len( state[0] )):
-                if state[row_index][col_index] == 0:
-                    return ( row_index, col_index )
-
+                x, y = findElement(state[row_index][col_index], goal_state)
+                score += abs( row_index-x ) + abs( col_index-y )
+    return score
 
 def getNextNodes( node : Node ):
     next_nodes = []
@@ -52,7 +63,6 @@ def getNextNodes( node : Node ):
             new_node = Node( new_state, node, node.g+1, h( new_state ), direction_str )
             next_nodes.append( new_node )
     return next_nodes
-
 
 def getLowestCostNode( nodeSet ):
     nodeList = list( nodeSet.values() )
@@ -120,6 +130,16 @@ def main():
     puzzle = Puzzle(INITIAL_STATE, GOAL_STATE)
     path = solvePuzzle(puzzle)
     print( path )
+    print( len(path),"moves" )
+
+    puzzle.show()
+    
+    for dir_str in path:
+        print()
+        puzzle.move( dir_str )
+        puzzle.show()
+
+
 
 if __name__ == "__main__":
     main()
