@@ -1,5 +1,6 @@
 from copy import deepcopy
 from game import *
+import time
 
 class Node:
     def __init__(self, state, parent_node, g, h, move):
@@ -12,10 +13,39 @@ class Node:
         for row in self.state:
             for col in row:
                 self.id = self.id*100 + col
-        # print( self.id )
     
     def f(self):
         return self.g + self.h
+
+
+    def getFullPath( self ):
+        path = []
+        node = self
+        while node.parent_node:
+            path.insert(0, node.move)
+            node = node.parent_node
+        return path
+
+    def getNextNodes( self ):
+        node = self
+        next_nodes = []
+        for direction_str in DIRECTIONS :
+            direction = DIRECTIONS[direction_str]
+            # get empty square coordinates
+            emptySquare = findEmptySquare( node.state )
+            # get empty square new coordinates
+            newEmptySqaure = [ emptySquare[0]+direction[0],
+                            emptySquare[1]+direction[1] ]
+            # check is legal move
+            if 0 <= newEmptySqaure[0] < len(node.state) and 0 <= newEmptySqaure[1] < len(node.state[0]) :
+                new_state = deepcopy(node.state)
+                # swap empty square oldPos with newPos
+                new_state[ newEmptySqaure[0] ][ newEmptySqaure[1] ], new_state[ emptySquare[0] ][emptySquare[1]]\
+                    = new_state[ emptySquare[0] ][emptySquare[1]], new_state[ newEmptySqaure[0] ][ newEmptySqaure[1] ]
+                # create node from state and add it to the list
+                new_node = Node( new_state, node, node.g+1, h( new_state ), direction_str )
+                next_nodes.append( new_node )
+        return next_nodes
 
 
 def findElement(element, state):
@@ -27,7 +57,7 @@ def findElement(element, state):
 def findEmptySquare(state):
     return findElement(0, state)
 
-
+# misplaced squares
 def h( state, goal_state = GOAL_STATE ):
     score = 0
     for row_index in range( len(state) ):
@@ -36,6 +66,7 @@ def h( state, goal_state = GOAL_STATE ):
                     score += 1
     return score
 
+# distance to correct position
 def h( state, goal_state = GOAL_STATE ):
     score = 0
     for row_index in range( len(state) ):
@@ -43,26 +74,6 @@ def h( state, goal_state = GOAL_STATE ):
                 x, y = findElement(state[row_index][col_index], goal_state)
                 score += abs( row_index-x ) + abs( col_index-y )
     return score
-
-def getNextNodes( node : Node ):
-    next_nodes = []
-    for direction_str in DIRECTIONS :
-        direction = DIRECTIONS[direction_str]
-        # get empty square coordinates
-        emptySquare = findEmptySquare( node.state )
-        # get empty square new coordinates
-        newEmptySqaure = [ emptySquare[0]+direction[0],
-                        emptySquare[1]+direction[1] ]
-        # check is legal move
-        if 0 <= newEmptySqaure[0] < len(node.state) and 0 <= newEmptySqaure[1] < len(node.state[0]) :
-            new_state = deepcopy(node.state)
-            # swap empty square oldPos with newPos
-            new_state[ newEmptySqaure[0] ][ newEmptySqaure[1] ], new_state[ emptySquare[0] ][emptySquare[1]]\
-                = new_state[ emptySquare[0] ][emptySquare[1]], new_state[ newEmptySqaure[0] ][ newEmptySqaure[1] ]
-            # create node from state and add it to the list
-            new_node = Node( new_state, node, node.g+1, h( new_state ), direction_str )
-            next_nodes.append( new_node )
-    return next_nodes
 
 def getLowestCostNode( nodeSet ):
     nodeList = list( nodeSet.values() )
@@ -78,29 +89,22 @@ def getLowestCostNode( nodeSet ):
 
     return lowest_cost_node
 
-def getFullPath( node : Node ):
-    path = []
-    while node.parent_node:
-        path.insert(0, node.move)
-        node = node.parent_node
-    return path
-
 
 def solvePuzzle( puzzle : Puzzle ):
     root_node = Node( puzzle.state, None , 0, h(puzzle.state) , "" )
     openSet = { root_node.id : root_node } 
     closedSet = { }
 
-    while openSet != []:
+    while openSet:
         node = getLowestCostNode( openSet )
 
         if node.state == puzzle.goal_state:
-            return  getFullPath(node)
+            return  node.getFullPath()
 
         # add node to visited nodes
         closedSet[ node.id ] = node
 
-        next_nodes = getNextNodes(node)
+        next_nodes = node.getNextNodes()
         for n in next_nodes:
             # check if node in open set
             if n.id in openSet and openSet[n.id].f() < n.f() :
@@ -118,13 +122,33 @@ def solvePuzzle( puzzle : Puzzle ):
         # remove node from open nodes
         del openSet[ node.id ]
 
-def printState(state):
-    for row in state:
-        for col in row:
-            if col == 0 : col = " "
-            print( col, end = " " )
-        print()
-    print()
+def solvePuzzle_BreadthFirstSearch( puzzle : Puzzle ):
+    root_node = Node( puzzle.state, None , 0, h(puzzle.state) , "" )
+    openSet = { root_node.id : root_node } 
+    childSet = { }
+    closedSet = { }
+
+    while openSet != {}:
+        for nodeId in openSet:
+            node = openSet[nodeId]
+
+            if node.state == puzzle.goal_state:
+                return  node.getFullPath()
+
+            # add node to visited nodes
+            closedSet[ node.id ] = node
+
+            next_nodes = node.getNextNodes()
+            for n in next_nodes:
+                
+                # check if node in closed set to avoid cycles
+                # if n.id in closedSet :
+                #     continue
+                childSet[n.id] = n
+
+        openSet = childSet
+        childSet = {}
+
 
 def main():
     puzzle = Puzzle(INITIAL_STATE, GOAL_STATE)
@@ -139,7 +163,25 @@ def main():
         puzzle.move( dir_str )
         puzzle.show()
 
+def main_compare():
+    puzzle = Puzzle(INITIAL_STATE, GOAL_STATE)
+    
+    start = time.time()
+    path = solvePuzzle(puzzle)
+    
+    end = time.time()
+    print("A star : " ,(end - start)*1000, "ms")
+    print( len(path) )
+    print( path )
+
+    start = time.time()
+    path = solvePuzzle_BreadthFirstSearch(puzzle)
+    print( len(path) )
+    print( path )
+    
+    end = time.time()
+    print("BFS : " ,(end - start)*1000, "ms")
 
 
 if __name__ == "__main__":
-    main()
+    main_compare()

@@ -7,7 +7,9 @@ pygame.init()
 
 # set screen
 WIDTH = 600
-HEIGHT = 600
+PADDING_TOP = 40
+HEIGHT = WIDTH + PADDING_TOP
+
 screen = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Taquin")
 
@@ -20,7 +22,6 @@ black = (0,0,0)
 FPS = 30
 clock = pygame.time.Clock()
 
-
 def write_text(text, position, color, fontSize=None):
     if fontSize:
         font = pygame.font.Font('fonts/tahomabd.ttf', fontSize)
@@ -30,7 +31,6 @@ def write_text(text, position, color, fontSize=None):
     textRect = text.get_rect()
     textRect.center = position
     screen.blit(text, textRect)
-
 
 
 class Square:
@@ -48,22 +48,23 @@ class Square:
 
 class Puzzle_GUI:
     padding = 20
-    square_width = (WIDTH - padding * 2)//3
-    square_height = (HEIGHT - padding * 2)//3
+    
+    square_width = (WIDTH - padding * 2)// len( INITIAL_STATE)
+    square_height = square_width
     def __init__(self, puzzle : Puzzle, screen = screen):
         self.puzzle = puzzle
         self.squares = []
 
         for row_index in range(len( self.puzzle.state )) :
             for col_index in range( len( self.puzzle.state[0] ) ):
-                square_pos = [ col_index*self.square_width + self.padding , row_index*self.square_height + self.padding ]
+                square_pos = [ col_index*self.square_width + self.padding , row_index*self.square_height + self.padding + PADDING_TOP ]
                 square_n = self.puzzle.state[row_index][col_index]
                 square = Square(square_n, square_pos , self.square_width, self.square_height)
                 self.squares.append( square )
 
     # grid pos are inversed (y, x)
     def screenCoord_toGridCoord( self, pos ):
-        pos_x, pos_y = (pos[0]-self.padding)//self.square_width , (pos[1]-self.padding)//self.square_height
+        pos_x, pos_y = (pos[0]-self.padding)//self.square_width , (pos[1]-self.padding-PADDING_TOP)//self.square_height
         return ( pos_y, pos_x )
 
     # position clicked in grid  to direction (L R U D)
@@ -144,26 +145,5 @@ def main_game():
         pygame.display.update()
         clock.tick(FPS)
 
-def main_puzzle_solver():
-    puzzle_gui = Puzzle_GUI(  Puzzle(INITIAL_STATE, GOAL_STATE)  )
-    path = puzzle_solver.solvePuzzle(puzzle_gui.puzzle)
-    
-    while not puzzle_gui.puzzle.isGoalState():
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                puzzle_gui.move( path[0] )
-                del path[0]
-
-        screen.fill(white)
-
-        puzzle_gui.showPuzzle()
-
-        pygame.display.update()
-        clock.tick(FPS)
-
 if __name__ == "__main__":
-    main_puzzle_solver()
+    main_game()

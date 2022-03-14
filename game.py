@@ -14,11 +14,6 @@ class Puzzle:
 
     def isGoalState(self):
         return self.state == self.goal_state
-        # for row_index in range( len(self.state) ):
-        #     for col_index in range( len( self.state[0] )):
-        #         if self.state[row_index][col_index] != self.goal_state[row_index][col_index]:
-        #             return False
-        # return True
 
     def move(self, direction_str):
         ''' 0 : not a legal move , 1 : legal move '''
@@ -38,11 +33,13 @@ class Puzzle:
         return 0
     
     def show(self):
+        prefix = ""
+        if len(self.state) > 3 :
+            prefix = " "
         for row in self.state:
             for square in row:
-                # print(square, end=" " )
-                if square == 0: print(" ", end = " ")
-                else: print(square, end=" " )
+                if square == 0 : print( prefix+" ", end = " " )
+                else : print( square if square>9 else prefix+str(square), end = " " )
             print()
 
 def main():
